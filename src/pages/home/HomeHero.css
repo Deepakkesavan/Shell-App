@@ -1,0 +1,29 @@
+.home-hero {
+    margin-bottom: var(--spacing-3xl);
+  }
+  
+  .home-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+  }
+  
+  .home-title {
+    font-family: Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.1;
+    color: #fff;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+  }
+  
+  .home-sub {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    max-width: 480px;
+    line-height: 1.6;
+  }

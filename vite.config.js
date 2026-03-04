@@ -13,6 +13,11 @@ export default defineConfig({
           name: 'empRemote', // This must match the 'name' field in the REMOTE's config
           entry: 'http://localhost:4202/emsui/remoteEntry.js',
         },
+        lmsRemote: {
+          type: 'module',
+          name: 'leave-management-system', // This must match the 'name' field in the REMOTE's config
+          entry: 'http://localhost:4205/remoteEntry.js',
+        },
       },
       shared: {
         react: { singleton: true, requiredVersion: '^19.0.0' },
@@ -24,7 +29,15 @@ export default defineConfig({
   server: { port: 5200 },
   // This is what npx vite preview uses
   preview: { port: 4200 },
-  build: { target: 'esnext' },
+  build: { 
+    target: 'esnext',
+    rollupOptions: {
+      external: [
+        'empRemote/App',
+        'lmsRemote/Routes',
+      ],
+    },
+  },
   optimizeDeps: {
     exclude: ['empRemote'],
   },
