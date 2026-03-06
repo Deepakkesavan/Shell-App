@@ -16,9 +16,9 @@ export const APPS_CONFIG = [
       hasRemote: true,
     },
     {
-      id: 'lms',
-      label: 'Leave Management System',
-      description: 'Leave Tracking Management governed by the Organization',
+      id: 'avd',
+      label: 'AVD',
+      description: 'Azure Virtual Desktop provisioning and session management',
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <rect x="2" y="3" width="20" height="14" rx="2"/>
@@ -26,10 +26,8 @@ export const APPS_CONFIG = [
         </svg>
       ),
       accent: '#a78bfa',
-      tag: 'RM',
-      hasRemote: true,
-      remoteName: 'lmsRemote',
-      exposedModule: './Routes'
+      tag: 'Infrastructure',
+      hasRemote: false,
     },
     {
       id: 'acm',
