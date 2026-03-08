@@ -1,13 +1,49 @@
 import { Suspense, lazy, useState } from 'react'
 import clariumLogo from './assets/clarium-logo.png'
+import AngularWrapper from './wrappers/AngularWrapper'
 
 const EmsApp = lazy(() => import(/* @vite-ignore */ 'empRemote/App'))
+
+// Lazy load LMS
+const loadLmsApp = async () => {
+  try {
+    console.log('[Shell] Loading LMS remote module...');
+    const LMSApp = React.lazy(() => import("leave_management_system/App"));
+    console.log('[Shell] LMS module loaded:', module);
+    return module;
+  } catch (error) {
+    console.error('[Shell] Failed to import LMS module:', error);
+    throw error;
+  }
+};
 
 function setEmsRuntimeConfig() {
   window.MF_RunTime_Config = {
     backendUrl: 'http://localhost:8080',
     dummyJwtAccessToken: '"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWVwYWtrQGNsYXJpdW0udGVjaCIsImVtcElkIjoxMjI1LCJkZXNpZ25hdGlvbiI6IlRyYWluZWUgU29mdHdhcmUgRW5naW5lZXIiLCJpYXQiOjE3NzIyMTk5NDUsImV4cCI6MTc3MjIyMzU0NX0.PueesuLEZQu7uHs6sR3K3C1zQtdRp64gvcXq9sQg2c8',
   }
+}
+
+function setLmsRuntimeConfig() {
+  console.log('[Shell] Setting LMS runtime config');
+  
+  // Configure backend URL for LMS
+  sessionStorage.setItem('module-config', JSON.stringify({
+    modules: [{
+      key: 'workforce',
+      subModules: [{
+        key: 'lms',
+        url: 'http://localhost:8080'
+      }]
+    }]
+  }));
+
+  // Set user session if available
+  const userInfo = {
+    empId: '1225',
+    designation: 'Trainee Software Engineer'
+  };
+  sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
 }
 
 const apps = [
@@ -24,6 +60,21 @@ const apps = [
       </svg>
     ),
     accent: '#4f8ef7',
+    tag: 'HR',
+  },
+  {
+    id: 'lms',
+    label: 'Leave Management',
+    description: 'Manage employee leave requests, balances, and approvals',
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    ),
+    accent: '#34d399',
     tag: 'HR',
   },
   {
@@ -361,6 +412,7 @@ const style = `
 
   .remote-content {
     flex: 1;
+    overflow: auto;
   }
 
   .placeholder {
@@ -423,9 +475,22 @@ const style = `
 
 export default function App() {
   const [activeApp, setActiveApp] = useState(null)
+  const [lmsModule, setLmsModule] = useState(null)
 
-  function openApp(id) {
-    if (id === 'ems') setEmsRuntimeConfig()
+  async function openApp(id) {
+    console.log('[Shell] Opening app:', id);
+    
+    if (id === 'ems') {
+      setEmsRuntimeConfig()
+    } else if (id === 'lms') {
+      setLmsRuntimeConfig()
+      try {
+        const module = await loadLmsApp()
+        setLmsModule(module)
+      } catch (error) {
+        console.error('[Shell] Failed to load LMS:', error)
+      }
+    }
     setActiveApp(id)
   }
 
@@ -439,9 +504,7 @@ export default function App() {
         {/* Header */}
         <header className="header">
           <div className="logo">
-            {/* <div className="logo-dot" />
-            Clarium */}
-            <img className='clarium-logo' src={clariumLogo} alt="" />
+            <img className='clarium-logo' src={clariumLogo} alt="Clarium" />
           </div>
           <div className="header-right">
             <div className="status-pill">
@@ -509,7 +572,32 @@ export default function App() {
                 </Suspense>
               )}
 
-              {activeApp !== 'ems' && (
+              {activeApp === 'lms' && (
+                <Suspense fallback={
+                  <div className="loading">
+                    <div className="spinner" />
+                    Loading Leave Management…
+                  </div>
+                }>
+                  {lmsModule ? (
+                    <AngularWrapper 
+                      bootstrapFn={async () => {
+                        console.log('[Shell] Bootstrapping Angular LMS...');
+                        const { bootstrapApplication, AppComponent, appConfig } = lmsModule;
+                        return bootstrapApplication(AppComponent, appConfig);
+                      }}
+                      rootSelector="lms-root"
+                    />
+                  ) : (
+                    <div className="loading">
+                      <div className="spinner" />
+                      Loading Leave Management…
+                    </div>
+                  )}
+                </Suspense>
+              )}
+
+              {activeApp !== 'ems' && activeApp !== 'lms' && (
                 <div className="placeholder">
                   <div className="placeholder-icon" style={{ color: activeData?.accent }}>
                     {activeData?.icon}
