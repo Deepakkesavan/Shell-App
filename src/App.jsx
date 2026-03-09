@@ -1,21 +1,92 @@
-import { Suspense, lazy, useState } from 'react'
+import React, { Suspense, lazy, useState } from 'react'
 import clariumLogo from './assets/clarium-logo.png'
 import AngularWrapper from './wrappers/AngularWrapper'
 
 const EmsApp = lazy(() => import(/* @vite-ignore */ 'empRemote/App'))
 
-// Lazy load LMS
-const loadLmsApp = async () => {
-  try {
-    console.log('[Shell] Loading LMS remote module...');
-    const LMSApp = React.lazy(() => import("leave_management_system/App"));
-    console.log('[Shell] LMS module loaded:', module);
-    return module;
-  } catch (error) {
-    console.error('[Shell] Failed to import LMS module:', error);
-    throw error;
+// ==================== LMS LOADER (CLEAN VERSION) ====================
+const LMS_REMOTE_URL = 'http://localhost:4205/remoteEntry.js'
+const LMS_SCOPE_NAME = 'leave_management_system'
+
+let lmsRemoteLoaded = false
+let lmsRemoteLoading = null
+
+async function loadAngularRemote() {
+  if (lmsRemoteLoading) return lmsRemoteLoading
+  if (lmsRemoteLoaded && window[LMS_SCOPE_NAME]) {
+    console.log('[loadAngularRemote] Already loaded')
+    return window[LMS_SCOPE_NAME]
   }
-};
+
+  console.log('[loadAngularRemote] Loading Angular remote from:', LMS_REMOTE_URL)
+
+  lmsRemoteLoading = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(`script[src="${LMS_REMOTE_URL}"]`)
+
+    if (existingScript && window[LMS_SCOPE_NAME]) {
+      lmsRemoteLoaded = true
+      resolve(window[LMS_SCOPE_NAME])
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = LMS_REMOTE_URL
+    script.type = 'text/javascript'
+
+    script.onload = () => {
+      console.log('[loadAngularRemote] Script loaded')
+      setTimeout(() => {
+        if (window[LMS_SCOPE_NAME]) {
+          lmsRemoteLoaded = true
+          console.log('[loadAngularRemote] Remote loaded successfully')
+          resolve(window[LMS_SCOPE_NAME])
+        } else {
+          reject(new Error(`${LMS_SCOPE_NAME} not found on window`))
+        }
+      }, 100)
+    }
+
+    script.onerror = () => {
+      lmsRemoteLoading = null
+      reject(new Error(`Failed to load ${LMS_REMOTE_URL}`))
+    }
+
+    document.head.appendChild(script)
+  })
+
+  return lmsRemoteLoading
+}
+
+async function getAngularModule(modulePath) {
+  const remote = await loadAngularRemote()
+  if (!remote || !remote.get) {
+    throw new Error('Angular remote not available')
+  }
+
+  if (remote.init) {
+    try {
+      await remote.init({})
+    } catch (error) {
+      console.warn('[getAngularModule] Init failed:', error)
+    }
+  }
+
+  const factory = await remote.get(modulePath)
+  return factory()
+}
+
+async function loadLmsApp() {
+  try {
+    console.log('[loadLmsApp] Loading LMS App module...')
+    const module = await getAngularModule('./App')
+    console.log('[loadLmsApp] LMS App loaded successfully')
+    return module
+  } catch (error) {
+    console.error('[loadLmsApp] Failed to load LMS App:', error)
+    throw error
+  }
+}
+// ==================== END LMS LOADER ====================
 
 function setEmsRuntimeConfig() {
   window.MF_RunTime_Config = {
@@ -27,7 +98,6 @@ function setEmsRuntimeConfig() {
 function setLmsRuntimeConfig() {
   console.log('[Shell] Setting LMS runtime config');
   
-  // Configure backend URL for LMS
   sessionStorage.setItem('module-config', JSON.stringify({
     modules: [{
       key: 'workforce',
@@ -38,7 +108,6 @@ function setLmsRuntimeConfig() {
     }]
   }));
 
-  // Set user session if available
   const userInfo = {
     empId: '1225',
     designation: 'Trainee Software Engineer'
@@ -137,7 +206,6 @@ const style = `
     flex-direction: column;
   }
 
-  /* ── Header ── */
   .header {
     position: sticky;
     top: 0;
@@ -161,20 +229,11 @@ const style = `
     display: flex;
     align-items: center;
     gap: 10px;
-    
   }
   
   .clarium-logo {
     width: 130px;
     height: 20px;
-  }
-
-  .logo-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #4f8ef7;
-    box-shadow: 0 0 10px #4f8ef7;
   }
 
   .header-right {
@@ -223,7 +282,6 @@ const style = `
     50% { opacity: 0.3; }
   }
 
-  /* ── Home view ── */
   .home {
     flex: 1;
     display: flex;
@@ -264,7 +322,6 @@ const style = `
     line-height: 1.6;
   }
 
-  /* ── Cards grid ── */
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -365,7 +422,6 @@ const style = `
     transform: translate(2px, -2px);
   }
 
-  /* ── Remote app frame ── */
   .remote-frame {
     flex: 1;
     display: flex;
@@ -476,22 +532,33 @@ const style = `
 export default function App() {
   const [activeApp, setActiveApp] = useState(null)
   const [lmsModule, setLmsModule] = useState(null)
+  const [lmsLoading, setLmsLoading] = useState(false)
 
   async function openApp(id) {
     console.log('[Shell] Opening app:', id);
     
     if (id === 'ems') {
       setEmsRuntimeConfig()
+      setActiveApp(id)
     } else if (id === 'lms') {
       setLmsRuntimeConfig()
-      try {
-        const module = await loadLmsApp()
-        setLmsModule(module)
-      } catch (error) {
-        console.error('[Shell] Failed to load LMS:', error)
+      setActiveApp(id)
+      
+      if (!lmsModule && !lmsLoading) {
+        setLmsLoading(true)
+        try {
+          const module = await loadLmsApp()
+          console.log('[Shell] LMS module loaded:', module)
+          setLmsModule(module)
+        } catch (error) {
+          console.error('[Shell] Failed to load LMS:', error)
+        } finally {
+          setLmsLoading(false)
+        }
       }
+    } else {
+      setActiveApp(id)
     }
-    setActiveApp(id)
   }
 
   const activeData = apps.find(a => a.id === activeApp)
@@ -500,8 +567,6 @@ export default function App() {
     <>
       <style>{style}</style>
       <div className="shell">
-
-        {/* Header */}
         <header className="header">
           <div className="logo">
             <img className='clarium-logo' src={clariumLogo} alt="Clarium" />
@@ -515,7 +580,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* Home — card grid */}
         {!activeApp && (
           <main className="home">
             <div className="home-hero">
@@ -547,7 +611,6 @@ export default function App() {
           </main>
         )}
 
-        {/* Remote app view */}
         {activeApp && (
           <div className="remote-frame">
             <div className="remote-topbar">
@@ -573,12 +636,7 @@ export default function App() {
               )}
 
               {activeApp === 'lms' && (
-                <Suspense fallback={
-                  <div className="loading">
-                    <div className="spinner" />
-                    Loading Leave Management…
-                  </div>
-                }>
+                <>
                   {lmsModule ? (
                     <AngularWrapper 
                       bootstrapFn={async () => {
@@ -594,7 +652,7 @@ export default function App() {
                       Loading Leave Management…
                     </div>
                   )}
-                </Suspense>
+                </>
               )}
 
               {activeApp !== 'ems' && activeApp !== 'lms' && (
@@ -609,7 +667,6 @@ export default function App() {
             </div>
           </div>
         )}
-
       </div>
     </>
   )

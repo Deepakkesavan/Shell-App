@@ -13,12 +13,7 @@ export default defineConfig({
           name: 'empRemote',
           entry: 'http://localhost:4202/emsui/remoteEntry.js',
         },
-        lmsRemote: {
-          type: "script",
-          name: "leave_management_system", // must match webpack name
-          entry: "http://localhost:4205/remoteEntry.js",
-          global: "leave_management_system",
-        },
+        // LMS is loaded manually via script tag in App.jsx
       },
       shared: {
         react: { 
@@ -41,7 +36,7 @@ export default defineConfig({
   ],
   server: { 
     port: 5200,
-    cors: true, // Enable CORS for Module Federation
+    cors: true,
   },
   preview: { 
     port: 4200,
@@ -53,6 +48,6 @@ export default defineConfig({
     minify: false,
   },
   optimizeDeps: {
-    exclude: ['empRemote', 'leave_management_system'],
-  }
+    exclude: ['empRemote'],
+  },
 })
