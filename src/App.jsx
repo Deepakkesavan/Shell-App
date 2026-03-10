@@ -4,7 +4,6 @@ import AngularWrapper from './wrappers/AngularWrapper'
 
 const EmsApp = lazy(() => import(/* @vite-ignore */ 'empRemote/App'))
 
-// ==================== LMS LOADER (CLEAN VERSION) ====================
 const LMS_REMOTE_URL = 'http://localhost:4205/remoteEntry.js'
 const LMS_SCOPE_NAME = 'leave_management_system'
 
@@ -95,12 +94,9 @@ function setEmsRuntimeConfig() {
   }
 }
 
-// FIND THIS FUNCTION in your shell-app/src/App.jsx:
-
 function setLmsRuntimeConfig() {
   console.log('[Shell] Setting LMS runtime config');
   
-  // Set backend URL in sessionStorage
   sessionStorage.setItem('module-config', JSON.stringify({
     modules: [{
       key: 'workforce',
@@ -111,23 +107,32 @@ function setLmsRuntimeConfig() {
     }]
   }));
 
-  // Set user info
   const userInfo = {
     empId: '1225',
     designation: 'Trainee Software Engineer'
   };
   sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
 
-  // ✅ CRITICAL: Set JWT token in sessionStorage so LMS can access it
-  const token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkZWVwYWtrQGNsYXJpdW0udGVjaCIsImVtcElkIjoxMjI1LCJkZXNpZ25hdGlvbiI6IlRyYWluZWUgU29mdHdhcmUgRW5naW5lZXIiLCJpYXQiOjE3NzMxMjE2ODEsImV4cCI6MTc3MzEyNTI4MX0.FYtQ42yCmckB5lHAjke70k6Msm3aImZGTE8pLsRiPYF2YIy-crdeHw1m7diW7LLCq0Pk_G-jVt6SIVDmCW3IfQ';
+  const token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkZWVwYWtrQGNsYXJpdW0udGVjaCIsImVtcElkIjoxMjI1LCJkZXNpZ25hdGlvbiI6IlRyYWluZWUgU29mdHdhcmUgRW5naW5lZXIiLCJpYXQiOjE3NzMxMjU4NjUsImV4cCI6MTc3MzEyOTQ2NX0.3Xfw41IKBL1Q56vLrkNk2cZ9fMGfISgq5Jg_Hek16xtcViH50_jNVgwJvzhrRqx7d0TmRjHzeHdKnF80qMbeXA';
+  console.log('=== TOKEN CHECK ===');
+console.log('sessionStorage.accessToken:', sessionStorage.getItem('accessToken'));
+console.log('sessionStorage.token:', sessionStorage.getItem('token'));
+console.log('localStorage.accessToken:', localStorage.getItem('accessToken'));
+console.log('localStorage.token:', localStorage.getItem('token'));
+  // Nuclear option: Set EVERYWHERE
+  const allKeys = ['accessToken', 'token', 'jwtToken', 'authToken', 'JWT', 'bearerToken', 'auth_token', 'access_token'];
   
-  // Store in multiple keys to cover all possible LMS lookups
-  sessionStorage.setItem('jwtToken', token);
-  sessionStorage.setItem('accessToken', token);
-  sessionStorage.setItem('token', token);
+  allKeys.forEach(key => {
+    sessionStorage.setItem(key, token);
+    localStorage.setItem(key, token);
+  });
   
-  console.log('[Shell] Config and token set successfully');
-  console.log('[Shell] Token available:', !!sessionStorage.getItem('jwtToken'));
+  // Also on window
+  window.AUTH_TOKEN = token;
+  window.JWT_TOKEN = token;
+  
+  console.log('[Shell] ✅ Token set in ALL locations');
+  console.log('[Shell] Verify sessionStorage.accessToken:', sessionStorage.getItem('accessToken')?.substring(0, 30));
 }
 
 const apps = [
