@@ -95,24 +95,39 @@ function setEmsRuntimeConfig() {
   }
 }
 
+// FIND THIS FUNCTION in your shell-app/src/App.jsx:
+
 function setLmsRuntimeConfig() {
   console.log('[Shell] Setting LMS runtime config');
   
+  // Set backend URL in sessionStorage
   sessionStorage.setItem('module-config', JSON.stringify({
     modules: [{
       key: 'workforce',
       subModules: [{
         key: 'lms',
-        url: 'http://localhost:8080'
+        url: 'https://workforce-dev.clarium.tech/lmsapi'
       }]
     }]
   }));
 
+  // Set user info
   const userInfo = {
     empId: '1225',
     designation: 'Trainee Software Engineer'
   };
   sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+  // ✅ CRITICAL: Set JWT token in sessionStorage so LMS can access it
+  const token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkZWVwYWtrQGNsYXJpdW0udGVjaCIsImVtcElkIjoxMjI1LCJkZXNpZ25hdGlvbiI6IlRyYWluZWUgU29mdHdhcmUgRW5naW5lZXIiLCJpYXQiOjE3NzMxMjE2ODEsImV4cCI6MTc3MzEyNTI4MX0.FYtQ42yCmckB5lHAjke70k6Msm3aImZGTE8pLsRiPYF2YIy-crdeHw1m7diW7LLCq0Pk_G-jVt6SIVDmCW3IfQ';
+  
+  // Store in multiple keys to cover all possible LMS lookups
+  sessionStorage.setItem('jwtToken', token);
+  sessionStorage.setItem('accessToken', token);
+  sessionStorage.setItem('token', token);
+  
+  console.log('[Shell] Config and token set successfully');
+  console.log('[Shell] Token available:', !!sessionStorage.getItem('jwtToken'));
 }
 
 const apps = [
