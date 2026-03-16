@@ -1,125 +1,84 @@
-// EXACT COPY from your working App.jsx - NO CHANGES
-
 const LMS_REMOTE_URL = 'http://localhost:4205/remoteEntry.js'
 const LMS_SCOPE_NAME = 'leave_management_system'
 
-let lmsRemoteLoaded = false
-let lmsRemoteLoading = null
+let _loadPromise = null
 
-async function loadAngularRemote() {
-  if (lmsRemoteLoading) return lmsRemoteLoading
-  if (lmsRemoteLoaded && window[LMS_SCOPE_NAME]) {
-    console.log('[loadAngularRemote] Already loaded')
-    return window[LMS_SCOPE_NAME]
-  }
+function _injectModuleScript(url) {
+  return new Promise((resolve, reject) => {
+    if (window[LMS_SCOPE_NAME]) return resolve(window[LMS_SCOPE_NAME])
 
-  console.log('[loadAngularRemote] Loading Angular remote from:', LMS_REMOTE_URL)
-
-  lmsRemoteLoading = new Promise((resolve, reject) => {
-    const existingScript = document.querySelector(`script[src="${LMS_REMOTE_URL}"]`)
-
-    if (existingScript && window[LMS_SCOPE_NAME]) {
-      lmsRemoteLoaded = true
-      resolve(window[LMS_SCOPE_NAME])
-      return
+    if (document.querySelector(`script[src="${url}"]`)) {
+      return _pollForScope(resolve, reject)
     }
 
     const script = document.createElement('script')
-    script.src = LMS_REMOTE_URL
-    script.type = 'text/javascript'
+    script.src  = url
+    script.type = 'module'   // Angular output uses import.meta — must be type="module"
 
-    script.onload = () => {
-      console.log('[loadAngularRemote] Script loaded')
-      setTimeout(() => {
-        if (window[LMS_SCOPE_NAME]) {
-          lmsRemoteLoaded = true
-          console.log('[loadAngularRemote] Remote loaded successfully')
-          resolve(window[LMS_SCOPE_NAME])
-        } else {
-          reject(new Error(`${LMS_SCOPE_NAME} not found on window`))
-        }
-      }, 100)
-    }
-
+    script.onload  = () => _pollForScope(resolve, reject)
     script.onerror = () => {
-      lmsRemoteLoading = null
-      reject(new Error(`Failed to load ${LMS_REMOTE_URL}`))
+      _loadPromise = null
+      reject(new Error(`[LMS] Failed to load remoteEntry from ${url}`))
     }
 
     document.head.appendChild(script)
   })
-
-  return lmsRemoteLoading
 }
 
-async function getAngularModule(modulePath) {
-  const remote = await loadAngularRemote()
-  if (!remote || !remote.get) {
-    throw new Error('Angular remote not available')
-  }
+function _pollForScope(resolve, reject, attempts = 0) {
+  if (window[LMS_SCOPE_NAME]) return resolve(window[LMS_SCOPE_NAME])
+  if (attempts >= 50) return reject(new Error(`[LMS] Timed out — window.${LMS_SCOPE_NAME} never appeared`))
+  setTimeout(() => _pollForScope(resolve, reject, attempts + 1), 100)
+}
 
-  if (remote.init) {
-    try {
-      await remote.init({})
-    } catch (error) {
-      console.warn('[getAngularModule] Init failed:', error)
-    }
+function loadLmsRemote() {
+  if (!_loadPromise) {
+    _loadPromise = _injectModuleScript(LMS_REMOTE_URL).then(async remote => {
+      if (remote.init) {
+        try { await remote.init({}) } catch (_) {}
+      }
+      return remote
+    })
   }
+  return _loadPromise
+}
 
-  const factory = await remote.get(modulePath)
+async function getModule(exposedPath) {
+  const remote  = await loadLmsRemote()
+  const factory = await remote.get(exposedPath)
   return factory()
 }
 
-export async function loadLmsApp() {
-  try {
-    console.log('[loadLmsApp] Loading LMS App module...')
-    const module = await getAngularModule('./App')
-    console.log('[loadLmsApp] LMS App loaded successfully')
-    return module
-  } catch (error) {
-    console.error('[loadLmsApp] Failed to load LMS App:', error)
-    throw error
-  }
+// Returns the bootstrap() function from the LMS remote.
+// The shell calls this — zero @angular/* imports required in the shell.
+export async function loadLmsBootstrap() {
+  const mod = await getModule('./Bootstrap')
+  // bootstrap.ts exports:  export async function bootstrap() { ... }
+  return mod.bootstrap
 }
 
+// ── Runtime config ────────────────────────────────────────────────────────────
+
 export function setLmsRuntimeConfig() {
-  console.log('[Shell] Setting LMS runtime config');
-  
   sessionStorage.setItem('module-config', JSON.stringify({
     modules: [{
       key: 'workforce',
-      subModules: [{
-        key: 'lms',
-        url: 'https://workforce-dev.clarium.tech/lmsapi'
-      }]
+      subModules: [{ key: 'lms', url: 'https://workforce-dev.clarium.tech/lmsapi' }]
     }]
-  }));
+  }))
 
-  const userInfo = {
+  sessionStorage.setItem('userInfo', JSON.stringify({
     empId: '1225',
     designation: 'Trainee Software Engineer'
-  };
-  sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
+  }))
 
-  const token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkZWVwYWtrQGNsYXJpdW0udGVjaCIsImVtcElkIjoxMjI1LCJkZXNpZ25hdGlvbiI6IlRyYWluZWUgU29mdHdhcmUgRW5naW5lZXIiLCJpYXQiOjE3NzMyMTM5OTYsImV4cCI6MTc3MzIxNzU5Nn0.3YMnMs69na6SCzj1UMvW1OHwYtea5iWIijlXSc7eqOmhiE27eBXNJmjK3F19c_nth0coc0hC7XxmXWl_563qpg';
-  console.log('=== TOKEN CHECK ===');
-  console.log('sessionStorage.accessToken:', sessionStorage.getItem('accessToken'));
-  console.log('sessionStorage.token:', sessionStorage.getItem('token'));
-  console.log('localStorage.accessToken:', localStorage.getItem('accessToken'));
-  console.log('localStorage.token:', localStorage.getItem('token'));
-  
-  // Nuclear option: Set EVERYWHERE
-  const allKeys = ['accessToken', 'token', 'jwtToken', 'authToken', 'JWT', 'bearerToken', 'auth_token', 'access_token'];
-  
-  allKeys.forEach(key => {
-    sessionStorage.setItem(key, token);
-    localStorage.setItem(key, token);
-  });
-  
-  // Also on window
-  window.AUTH_TOKEN = token;
-  window.JWT_TOKEN = token;
-  
-  console.log('[Shell] ✅ Token set in ALL locations');
-  console.log('[Shell] Verify sessionStorage.accessToken:', sessionStorage.getItem('accessToken')?.substring(0, 30));
+  const token = sessionStorage.getItem('accessToken') || _devToken()
+  const keys  = ['accessToken','token','jwtToken','authToken','JWT','bearerToken','auth_token','access_token']
+  keys.forEach(k => { sessionStorage.setItem(k, token); localStorage.setItem(k, token) })
+  window.AUTH_TOKEN = token
+  window.JWT_TOKEN  = token
+}
+
+function _devToken() {
+  return 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkZWVwYWtrQGNsYXJpdW0udGVjaCIsImVtcElkIjoxMjI1LCJkZXNpZ25hdGlvbiI6IlRyYWluZWUgU29mdHdhcmUgRW5naW5lZXIiLCJpYXQiOjE3NzMxMjU4NjUsImV4cCI6MTc3MzEyOTQ2NX0.3Xfw41IKBL1Q56vLrkNk2cZ9fMGfISgq5Jg_Hek16xtcViH50_jNVgwJvzhrRqx7d0TmRjHzeHdKnF80qMbeXA'
 }

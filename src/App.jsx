@@ -1,42 +1,55 @@
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Header from './components/layout/Header.jsx';
-import  Home from './pages/home/Home.jsx';
-import  RemoteApp   from './pages/remoteApp/RemoteApp.jsx';
-import { APPS_CONFIG } from './config/apps.config.jsx'; 
+import Home from './pages/home/Home.jsx';
+import RemoteApp from './pages/remoteApp/RemoteApp.jsx';
+import { APPS_CONFIG } from './config/apps.config.jsx';
 import { setRemoteRuntimeConfig } from './config/remote.config';
 import './App.css';
 
-export default function App() {
-  const [activeApp, setActiveApp] = useState(null);
+// Inner component so useNavigate is always called inside <BrowserRouter>
+function AppRoutes() {
+  const navigate = useNavigate();
 
   function handleAppSelect(appId) {
-    console.log('[App] App selected:', appId);
-    
-    // Set runtime configuration for the selected app
     setRemoteRuntimeConfig(appId);
-    
-    // Set active app to display it
-    setActiveApp(appId);
+    navigate(`/${appId}`);
   }
 
   function handleBack() {
-    console.log('[App] Navigating back to home');
-    setActiveApp(null);
+    navigate('/');
   }
-
-  const activeAppData = APPS_CONFIG.find(app => app.id === activeApp);
 
   return (
     <div className="shell">
       <Header />
-      
-      {!activeApp && (
-        <Home apps={APPS_CONFIG} onAppSelect={handleAppSelect} />
-      )}
 
-      {activeApp && activeAppData && (
-        <RemoteApp app={activeAppData} onBack={handleBack} />
-      )}
+      <Routes>
+        {/* Home — app catalogue */}
+        <Route
+          path="/"
+          element={<Home apps={APPS_CONFIG} onAppSelect={handleAppSelect} />}
+        />
+
+        {/* One route per app — /* lets Angular's router handle its child routes */}
+        {APPS_CONFIG.map(app => (
+          <Route
+            key={app.id}
+            path={`/${app.id}/*`}
+            element={<RemoteApp app={app} onBack={handleBack} />}
+          />
+        ))}
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }

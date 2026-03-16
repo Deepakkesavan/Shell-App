@@ -1,57 +1,69 @@
-// EXACT COPY of LMS rendering logic from your working App.jsx
-
-import { useState } from 'react';
-import { loadLmsApp, setLmsRuntimeConfig } from '../../config/lms.config';
-import AngularWrapper from '../../wrappers/AngularWrapper';
-import { LoadingSpinner } from '../feedback';
+import { useEffect, useRef } from 'react'
 
 /**
- * EXACT COPY from working App.jsx - handles LMS state and rendering
+ * AngularWrapper
+ *
+ * Mounts an Angular microfrontend by calling a bootstrap function provided
+ * by the remote.  The shell never imports @angular/* — all Angular code
+ * lives inside the remote bundle.
+ *
+ * Props:
+ *   bootstrapFn   {() => Promise<ApplicationRef>}  from remote ./Bootstrap
+ *   rootSelector  {string}  e.g. 'lms-root'
  */
-export default function LmsRemote() {
-  const [lmsModule, setLmsModule] = useState(null);
-  const [lmsLoading, setLmsLoading] = useState(false);
+export default function AngularWrapper({ bootstrapFn, rootSelector }) {
+  const containerRef    = useRef(null)
+  const appRef          = useRef(null)
+  const initializingRef = useRef(false)
 
-  // This mirrors the openApp logic from your original App.jsx
-  async function initializeLms() {
-    if (!lmsModule && !lmsLoading) {
-      setLmsLoading(true);
+  useEffect(() => {
+    if (!bootstrapFn || !containerRef.current) return
+    if (initializingRef.current || appRef.current)  return
+
+    initializingRef.current = true
+    let mounted = true
+
+    async function init() {
       try {
-        const module = await loadLmsApp();
-        console.log('[Shell] LMS module loaded:', module);
-        setLmsModule(module);
-      } catch (error) {
-        console.error('[Shell] Failed to load LMS:', error);
+        // Create the Angular host element before bootstrapping
+        const host = document.createElement(rootSelector)
+        containerRef.current.appendChild(host)
+
+        window.__MICROFRONTEND__ = true
+
+        // bootstrapFn comes entirely from the remote — no @angular/* in shell
+        const app = await bootstrapFn()
+
+        if (mounted) {
+          appRef.current = app
+        } else {
+          app.destroy()
+        }
+      } catch (err) {
+        console.error('[AngularWrapper] Bootstrap error:', err)
       } finally {
-        setLmsLoading(false);
+        initializingRef.current = false
       }
     }
-  }
 
-  // Load on mount
-  if (!lmsModule && !lmsLoading) {
-    initializeLms();
-  }
+    init()
 
-  // Show loading
-  if (!lmsModule) {
-    return (
-      <div className="loading">
-        <div className="spinner" />
-        Loading Leave Management…
-      </div>
-    );
-  }
+    return () => {
+      mounted = false
+      if (appRef.current) {
+        try { appRef.current.destroy() } catch (_) {}
+        appRef.current = null
+      }
+      if (containerRef.current) containerRef.current.innerHTML = ''
+      delete window.__MICROFRONTEND__
+      initializingRef.current = false
+    }
+  }, [bootstrapFn, rootSelector])
 
-  // Render Angular app - EXACT SAME as your working App.jsx
   return (
-    <AngularWrapper 
-      bootstrapFn={async () => {
-        console.log('[Shell] Bootstrapping Angular LMS...');
-        const { bootstrapApplication, AppComponent, appConfig } = lmsModule;
-        return bootstrapApplication(AppComponent, appConfig);
-      }}
-      rootSelector="lms-root"
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
     />
-  );
+  )
 }

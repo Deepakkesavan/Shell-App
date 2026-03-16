@@ -1,113 +1,69 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * AngularWrapper - Bootstraps Angular microfrontends inside React
- * 
- * FIXES:
- * - Prevents double rendering caused by React StrictMode
- * - Properly manages Angular app lifecycle
- * 
- * @param {Object} props
- * @param {Function} props.bootstrapFn - Function that returns Angular ApplicationRef
- * @param {string} props.rootSelector - Angular root selector (e.g., 'lms-root')
+ * AngularWrapper
+ *
+ * Mounts an Angular microfrontend by calling a bootstrap function provided
+ * by the remote.  The shell never imports @angular/* — all Angular code
+ * lives inside the remote bundle.
+ *
+ * Props:
+ *   bootstrapFn   {() => Promise<ApplicationRef>}  from remote ./Bootstrap
+ *   rootSelector  {string}  e.g. 'lms-root'
  */
 export default function AngularWrapper({ bootstrapFn, rootSelector }) {
-  const containerRef = useRef(null)
-  const appRef = useRef(null)
-  const initializingRef = useRef(false)  // ✅ FIX: Prevent double initialization
+  const containerRef    = useRef(null)
+  const appRef          = useRef(null)
+  const initializingRef = useRef(false)
 
   useEffect(() => {
+    if (!bootstrapFn || !containerRef.current) return
+    if (initializingRef.current || appRef.current)  return
+
+    initializingRef.current = true
     let mounted = true
 
-    async function initAngularApp() {
-      if (!containerRef.current) {
-        console.log('[AngularWrapper] No container ref, skipping init')
-        return
-      }
-
-      // ✅ FIX: Prevent double initialization from React StrictMode
-      if (initializingRef.current) {
-        console.log('[AngularWrapper] Already initializing, skipping')
-        return
-      }
-
-      // ✅ FIX: If app already exists, don't recreate it
-      if (appRef.current) {
-        console.log('[AngularWrapper] App already exists, skipping init')
-        return
-      }
-
-      initializingRef.current = true
-
+    async function init() {
       try {
-        console.log('[AngularWrapper] Initializing Angular app with selector:', rootSelector)
+        // Create the Angular host element before bootstrapping
+        const host = document.createElement(rootSelector)
+        containerRef.current.appendChild(host)
 
-        // CRITICAL: Create the Angular root element FIRST
-        const angularRoot = document.createElement(rootSelector)
-        containerRef.current.appendChild(angularRoot)
-        console.log('[AngularWrapper] Created Angular root element:', rootSelector)
-
-        // Set microfrontend flag
         window.__MICROFRONTEND__ = true
 
-        // Bootstrap Angular
-        console.log('[AngularWrapper] Calling bootstrap function...')
+        // bootstrapFn comes entirely from the remote — no @angular/* in shell
         const app = await bootstrapFn()
-        
+
         if (mounted) {
           appRef.current = app
-          console.log('[AngularWrapper] ✅ Angular app bootstrapped successfully')
         } else {
-          // Component unmounted during bootstrap
-          console.log('[AngularWrapper] Component unmounted during bootstrap, destroying app')
           app.destroy()
         }
-
-      } catch (error) {
-        console.error('[AngularWrapper] ❌ Bootstrap error:', error)
+      } catch (err) {
+        console.error('[AngularWrapper] Bootstrap error:', err)
       } finally {
         initializingRef.current = false
       }
     }
 
-    initAngularApp()
+    init()
 
-    // Cleanup function
     return () => {
       mounted = false
-      
       if (appRef.current) {
-        console.log('[AngularWrapper] Destroying Angular app')
-        try {
-          appRef.current.destroy()
-        } catch (error) {
-          console.error('[AngularWrapper] Error destroying app:', error)
-        }
+        try { appRef.current.destroy() } catch (_) {}
         appRef.current = null
       }
-
-      // Clean up the DOM
-      if (containerRef.current) {
-        containerRef.current.innerHTML = ''
-      }
-
-      // Clean up global flag
+      if (containerRef.current) containerRef.current.innerHTML = ''
       delete window.__MICROFRONTEND__
-      
-      // Reset initialization flag
       initializingRef.current = false
     }
   }, [bootstrapFn, rootSelector])
 
   return (
-    <div 
-      ref={containerRef} 
-      style={{ 
-        width: '100%', 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
     />
   )
 }
