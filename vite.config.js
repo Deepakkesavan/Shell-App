@@ -25,6 +25,6 @@ export default defineConfig({
   preview: { port: 4200 },
   build: { target: 'esnext' },
   optimizeDeps: {
-    exclude: ['empRemote', 'newRemote'], // Add to exclusions
+    exclude: ['empRemote'], // Add to exclusions
   },
 })
