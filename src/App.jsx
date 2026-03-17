@@ -1,55 +1,37 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import Header from './components/layout/Header.jsx';
-import Home from './pages/home/Home.jsx';
-import RemoteApp from './pages/remoteApp/RemoteApp.jsx';
-import { APPS_CONFIG } from './config/apps.config.jsx';
+import { useState } from 'react';
+import { Header } from './components/layout';
+import RemoteApp from './pages/remoteApp/RemoteApp';
+import Home from './pages/home/Home';
+
+import { APPS_CONFIG } from './config/apps.config';
 import { setRemoteRuntimeConfig } from './config/remote.config';
 import './App.css';
 
-// Inner component so useNavigate is always called inside <BrowserRouter>
-function AppRoutes() {
-  const navigate = useNavigate();
+export default function App() {
+  const [activeApp, setActiveApp] = useState(null);
 
   function handleAppSelect(appId) {
     setRemoteRuntimeConfig(appId);
-    navigate(`/${appId}`);
+    setActiveApp(appId);
   }
 
   function handleBack() {
-    navigate('/');
+    setActiveApp(null);
   }
+
+  const activeAppData = APPS_CONFIG.find(app => app.id === activeApp);
 
   return (
     <div className="shell">
       <Header />
+      
+      {!activeApp && (
+        <Home apps={APPS_CONFIG} onAppSelect={handleAppSelect} />
+      )}
 
-      <Routes>
-        {/* Home — app catalogue */}
-        <Route
-          path="/"
-          element={<Home apps={APPS_CONFIG} onAppSelect={handleAppSelect} />}
-        />
-
-        {/* One route per app — /* lets Angular's router handle its child routes */}
-        {APPS_CONFIG.map(app => (
-          <Route
-            key={app.id}
-            path={`/${app.id}/*`}
-            element={<RemoteApp app={app} onBack={handleBack} />}
-          />
-        ))}
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      {activeApp && activeAppData && (
+        <RemoteApp app={activeAppData} onBack={handleBack} />
+      )}
     </div>
-  );
-}
-
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
   );
 }

@@ -14,24 +14,23 @@ export const APPS_CONFIG = [
     accent: '#4f8ef7',
     tag: 'HR',
     hasRemote: true,
-    type: 'react',
+    remoteName: 'empRemote', // Remote identifier
   },
+  // NEW REMOTE APP CONFIGURATION
   {
-    id: 'lms',
-    label: 'Leave Management',
-    description: 'Manage employee leave requests, balances, and approvals',
+    id: 'newapp', // Change this to match your app's purpose (e.g., 'tms', 'lms', 'reports')
+    label: 'New Application', // Change to your app name
+    description: 'Description of what this application does', // Update description
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
       </svg>
     ),
-    accent: '#34d399',
-    tag: 'HR',
+    accent: '#f59e0b', // Choose your accent color
+    tag: 'NEW', // Category tag
     hasRemote: true,
-    type: 'angular',
+    remoteName: 'newRemote', // Must match vite.config.js remote name
   },
   {
     id: 'avd',

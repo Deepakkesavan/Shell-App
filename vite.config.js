@@ -12,42 +12,19 @@ export default defineConfig({
           type: 'module',
           name: 'empRemote',
           entry: 'http://localhost:4202/emsui/remoteEntry.js',
-        },
-        // LMS is loaded manually via script tag in App.jsx
+        }
       },
       shared: {
-        react: { 
-          singleton: true, 
-          requiredVersion: '^19.0.0',
-          eager: false,
-        },
-        'react-dom': { 
-          singleton: true, 
-          requiredVersion: '^19.0.0',
-          eager: false,
-        },
-        'react-router-dom': { 
-          singleton: true, 
-          requiredVersion: '^7.1.0',
-          eager: false,
-        },
+        react: { singleton: true, requiredVersion: '^19.0.0' },
+        'react-dom': { singleton: true, requiredVersion: '^19.0.0' },
+        'react-router-dom': { singleton: true, requiredVersion: '^7.1.0' },
       },
     }),
   ],
-  server: { 
-    port: 5200,
-    cors: true,
-  },
-  preview: { 
-    port: 4200,
-    cors: true,
-  },
-  build: { 
-    target: 'esnext',
-    modulePreload: false,
-    minify: false,
-  },
+  server: { port: 5200 },
+  preview: { port: 4200 },
+  build: { target: 'esnext' },
   optimizeDeps: {
-    exclude: ['empRemote'],
+    exclude: ['empRemote', 'newRemote'], // Add to exclusions
   },
 })
