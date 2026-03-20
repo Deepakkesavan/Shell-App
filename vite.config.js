@@ -11,7 +11,12 @@ export default defineConfig({
         empRemote: {
           type: 'module',
           name: 'empRemote',
-          entry: 'http://localhost:4202/emsui/remoteEntry.js',
+          entry: 'http://localhost:4202/remoteEntry.js',
+        },
+        tmsRemote: {
+          type: 'module',
+          name: 'reactRemote',
+          entry: 'http://localhost:4201/remoteEntry.js',
         }
       },
       shared: {

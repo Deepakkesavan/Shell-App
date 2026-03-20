@@ -11,6 +11,7 @@ export default function App() {
   const [activeApp, setActiveApp] = useState(null);
 
   function handleAppSelect(appId) {
+    // CRITICAL: Set runtime config BEFORE rendering remote
     setRemoteRuntimeConfig(appId);
     setActiveApp(appId);
   }
