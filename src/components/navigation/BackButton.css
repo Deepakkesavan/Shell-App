@@ -3,14 +3,14 @@
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  border-radius: var(--radius-md);
+  border-radius: var(--shell-radius-md);
   border: 1px solid rgba(255,255,255,0.08);
   background: transparent;
   color: #94a3b8;
   font-size: 0.82rem;
-  font-family: var(--font-primary);
+  font-family: var(--shell-font-primary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--shell-transition-fast);
 }
 
 .back-btn:hover {

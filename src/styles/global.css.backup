@@ -1,7 +1,7 @@
 body {
-  font-family: var(--shell-font-primary);
-  background: var(--shell-color-bg-primary);
-  color: var(--shell-color-text-primary);
+  font-family: var(--font-primary);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   min-height: 100vh;
 }
 

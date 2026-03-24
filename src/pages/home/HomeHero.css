@@ -1,5 +1,5 @@
 .home-hero {
-  margin-bottom: var(--spacing-3xl);
+  margin-bottom: var(--shell-spacing-3xl);
 }
 
 .home-eyebrow {
@@ -7,7 +7,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-primary);
+  color: var(--shell-color-primary);
   margin-bottom: 0.75rem;
 }
 
@@ -23,7 +23,7 @@
 
 .home-sub {
   font-size: 1rem;
-  color: var(--color-text-secondary);
+  color: var(--shell-color-text-secondary);
   max-width: 480px;
   line-height: 1.6;
 }

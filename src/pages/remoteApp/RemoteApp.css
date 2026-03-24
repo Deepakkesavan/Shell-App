@@ -7,12 +7,40 @@
 .remote-topbar {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: 0.875rem var(--spacing-2xl);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--shell-spacing-md);
+  padding: 0.875rem var(--shell-spacing-2xl);
+  border-bottom: 1px solid var(--shell-color-border);
   background: rgba(255,255,255,0.015);
 }
 
 .remote-content {
   flex: 1;
+  
+  /* CRITICAL: Isolate remote app styles */
+  position: relative;
+  isolation: isolate;
+  
+  /* Reset inherited styles from shell */
+  font-family: initial;
+  color: initial;
+  background: initial;
+  
+  /* Let remote app control its own space */
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+/* Ensure remote app's root element gets clean slate */
+.remote-content > * {
+  /* Remote app root should not inherit shell styles */
+  all: revert;
+}
+
+/* Provide a clean rendering context for remote */
+.remote-content > #ems-root {
+  /* Ensure remote app fills the space */
+  min-height: 100%;
+  width: 100%;
 }

@@ -4,9 +4,9 @@
   align-items: center;
   justify-content: center;
   flex: 1;
-  gap: var(--spacing-md);
-  color: var(--color-text-muted);
-  padding: var(--spacing-4xl);
+  gap: var(--shell-spacing-md);
+  color: var(--shell-color-text-muted);
+  padding: var(--shell-spacing-4xl);
   text-align: center;
 }
 
@@ -14,8 +14,8 @@
   width: 56px;
   height: 56px;
   border-radius: 14px;
-  background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
+  background: var(--shell-color-card-bg);
+  border: 1px solid var(--shell-color-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,7 +23,7 @@
 }
 
 .placeholder h3 {
-  font-family: var(--font-heading);
+  font-family: var(--shell-font-heading);
   font-size: 1.1rem;
   color: #475569;
   font-weight: 700;
@@ -31,5 +31,5 @@
 
 .placeholder p {
   font-size: 0.82rem;
-  color: var(--color-text-muted);
+  color: var(--shell-color-text-muted);
 }

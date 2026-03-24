@@ -2,53 +2,53 @@
 
 :root {
   /* Fonts */
-  --font-primary: 'DM Sans', sans-serif;
-  --font-heading: 'Syne', sans-serif;
+  --shell-font-primary: 'DM Sans', sans-serif;
+  --shell-font-heading: 'Syne', sans-serif;
 
   /* Colors */
-  --color-bg-primary: #0b0f1a;
-  --color-bg-secondary: rgba(11,15,26,0.85);
-  --color-text-primary: #e2e8f0;
-  --color-text-secondary: #64748b;
-  --color-text-muted: #334155;
-  --color-border: rgba(255,255,255,0.06);
-  --color-border-hover: rgba(255,255,255,0.14);
+  --shell-color-bg-primary: #0b0f1a;
+  --shell-color-bg-secondary: rgba(11,15,26,0.85);
+  --shell-color-text-primary: #e2e8f0;
+  --shell-color-text-secondary: #64748b;
+  --shell-color-text-muted: #334155;
+  --shell-color-border: rgba(255,255,255,0.06);
+  --shell-color-border-hover: rgba(255,255,255,0.14);
   
   /* Accent Colors */
-  --color-primary: #4f8ef7;
-  --color-success: #34d399;
+  --shell-color-primary: #4f8ef7;
+  --shell-color-success: #34d399;
   
   /* Card Colors */
-  --color-card-bg: rgba(255,255,255,0.03);
-  --color-card-bg-hover: rgba(255,255,255,0.05);
-  --color-card-border: rgba(255,255,255,0.07);
+  --shell-color-card-bg: rgba(255,255,255,0.03);
+  --shell-color-card-bg-hover: rgba(255,255,255,0.05);
+  --shell-color-card-border: rgba(255,255,255,0.07);
   
   /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 2.5rem;
-  --spacing-3xl: 3rem;
-  --spacing-4xl: 4rem;
+  --shell-spacing-xs: 0.25rem;
+  --shell-spacing-sm: 0.5rem;
+  --shell-spacing-md: 1rem;
+  --shell-spacing-lg: 1.5rem;
+  --shell-spacing-xl: 2rem;
+  --shell-spacing-2xl: 2.5rem;
+  --shell-spacing-3xl: 3rem;
+  --shell-spacing-4xl: 4rem;
   
   /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 999px;
+  --shell-radius-sm: 4px;
+  --shell-radius-md: 8px;
+  --shell-radius-lg: 12px;
+  --shell-radius-xl: 16px;
+  --shell-radius-full: 999px;
   
   /* Transitions */
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.2s ease;
-  --transition-slow: 0.3s ease;
+  --shell-transition-fast: 0.15s ease;
+  --shell-transition-normal: 0.2s ease;
+  --shell-transition-slow: 0.3s ease;
   
   /* Shadows */
-  --shadow-glow: 0 0 10px currentColor;
+  --shell-shadow-glow: 0 0 10px currentColor;
   
   /* Z-index */
-  --z-header: 100;
-  --z-modal: 200;
+  --shell-z-header: 100;
+  --shell-z-modal: 200;
 }
